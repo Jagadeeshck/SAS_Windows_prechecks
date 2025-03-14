@@ -26,7 +26,22 @@ if ($serverType -in @("Grid", "Compute")) {
         Write-Output "Disk I/O Speed on Drive $drive: $($diskIOResults[$drive]) (Expected: >= 200 MB/s) - $(if ($diskIOResults[$drive] -match '\d+' -and [int]($diskIOResults[$drive] -replace '\D+') -ge 200) { 'PASS' } else { 'FAIL' })"
     }
 }
+# Check SAS Install Account Rights
+try {
+    $account = Read-Host "Enter SAS Install Account"
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+    Write-Output "SAS Install Account ($account) Admin Rights: $(if ($isAdmin) { 'PASS' } else { 'FAIL' })"
+} catch {
+    Write-Output "Failed to check account rights - FAIL"
+}
 
+# Check Firewall Status
+try {
+    $firewallStatus = (Get-NetFirewallProfile | Where-Object { $_.Enabled -eq 'True' })
+    Write-Output "Firewall Status: $(if ($firewallStatus) { 'Enabled - FAIL' } else { 'Disabled - PASS' })"
+} catch {
+    Write-Output "Failed to check firewall status - FAIL"
+}
 # Check Java Version for Mid-Tier and Compute Nodes
 if ($serverType -in @("Mid-Tier", "Compute")) {
     try {
