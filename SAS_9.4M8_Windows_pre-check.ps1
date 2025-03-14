@@ -26,13 +26,27 @@ if ($serverType -in @("Grid", "Compute")) {
         Write-Output "Disk I/O Speed on Drive $drive: $($diskIOResults[$drive]) (Expected: >= 200 MB/s) - $(if ($diskIOResults[$drive] -match '\d+' -and [int]($diskIOResults[$drive] -replace '\D+') -ge 200) { 'PASS' } else { 'FAIL' })"
     }
 }
-# Check SAS Install Account Rights
-try {
-    $account = Read-Host "Enter SAS Install Account"
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
-    Write-Output "SAS Install Account ($account) Admin Rights: $(if ($isAdmin) { 'PASS' } else { 'FAIL' })"
-} catch {
-    Write-Output "Failed to check account rights - FAIL"
+# Prompt for user accounts based on server type
+if ($serverType -in @("Metadata", "Mid-Tier")) {
+    $sassinst = Read-Host "Enter SAS Installer Account"
+    $accounts = @($sassinst)
+} else {
+    $lsfAdmin = Read-Host "Enter LSF Admin Account"
+    $lsfUser = Read-Host "Enter LSF User Account"
+    $sassrv = Read-Host "Enter SAS Spawned Server Account"
+    $accounts = @($lsfAdmin, $lsfUser, $sassrv)
+}
+
+# Check account rights and permissions
+foreach ($account in $accounts) {
+    try {
+        $isAdmin = (Get-LocalGroupMember -Group "Administrators" -Member $account -ErrorAction SilentlyContinue)
+        $rights = (Get-LocalUser -Name $account | Get-LocalUserRightsAssignment)
+        Write-Output "Account $account Admin Rights: $(if ($isAdmin) { 'PASS' } else { 'FAIL' })"
+        Write-Output "Account $account Rights: $($rights.Right | Out-String)"
+    } catch {
+        Write-Output "Failed to check account rights for $account - FAIL"
+    }
 }
 
 # Check Firewall Status
