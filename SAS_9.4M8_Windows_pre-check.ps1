@@ -31,10 +31,11 @@ if ($serverType -in @("Metadata", "Mid-Tier")) {
     $sassinst = Read-Host "Enter SAS Installer Account"
     $accounts = @($sassinst)
 } else {
+    $sassinst = Read-Host "Enter SAS Installer Account"
     $lsfAdmin = Read-Host "Enter LSF Admin Account"
     $lsfUser = Read-Host "Enter LSF User Account"
     $sassrv = Read-Host "Enter SAS Spawned Server Account"
-    $accounts = @($lsfAdmin, $lsfUser, $sassrv)
+    $accounts = @($sasinst, $lsfAdmin, $lsfUser, $sassrv)
 }
 
 # Check account rights and permissions
